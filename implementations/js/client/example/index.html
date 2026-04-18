@@ -1,0 +1,1063 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>WSC SDK v5 — Full Protocol Explorer</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Syne:wght@400;700;800&display=swap" rel="stylesheet"/>
+  <style>
+    /* ─── Reset & Tokens ─────────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #0b0c0f;
+      --bg2:       #111318;
+      --bg3:       #181a20;
+      --border:    #25272f;
+      --border2:   #2e3140;
+      --text:      #c8cad4;
+      --text2:     #787a87;
+      --text3:     #4a4d5c;
+      --accent:    #e8ff47;       /* volt yellow */
+      --accent2:   #3dffc0;       /* mint */
+      --accent3:   #ff4d6d;       /* coral */
+      --accent4:   #7b8cff;       /* lavender */
+      --accent5:   #ff9f47;       /* amber */
+      --stream:    #3dffc0;
+      --cmd:       #ff9f47;
+      --param:     #7b8cff;
+      --tunnel:    #ff4d6d;
+      --state:     #e8ff47;
+      --ff-mono:   'JetBrains Mono', monospace;
+      --ff-head:   'Syne', sans-serif;
+      --radius:    4px;
+      --radius2:   8px;
+    }
+
+    input::-webkit-outer-spin-button,
+    input::-webkit-inner-spin-button {
+        /* display: none; <- Crashes Chrome on hover */
+        -webkit-appearance: none;
+        margin: 0; /* <-- Apparently some margin are still there even though it's hidden */
+    }
+
+    input[type=number] {
+        -moz-appearance:textfield; /* Firefox */
+    }
+
+    html, body { height: 100%; }
+
+    body {
+      font-family: var(--ff-mono);
+      font-size: 13px;
+      background: var(--bg);
+      color: var(--text);
+      overflow: hidden;
+    }
+
+    /* ─── Scanline overlay ────────────────────────────────────────────────── */
+    body::after {
+      content: '';
+      position: fixed; inset: 0;
+      pointer-events: none;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent 0px, transparent 3px,
+        rgba(0,0,0,.08) 3px, rgba(0,0,0,.08) 4px
+      );
+      z-index: 9999;
+    }
+
+    /* ─── Layout ──────────────────────────────────────────────────────────── */
+    .shell {
+      display: grid;
+      grid-template-rows: 48px 1fr;
+      grid-template-columns: auto 1fr auto;
+      height: 100vh;
+      gap: 0;
+      overflow: hidden;
+    }
+
+    /* ─── Top bar ─────────────────────────────────────────────────────────── */
+    .topbar {
+      grid-column: 1 / -1;
+      background: var(--bg2);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      padding: 0 20px;
+      gap: 24px;
+    }
+
+    .topbar-logo {
+      font-family: var(--ff-head);
+      font-weight: 800;
+      font-size: 15px;
+      letter-spacing: .06em;
+      color: var(--accent);
+    }
+
+    .topbar-logo span { color: var(--text2); font-weight: 400; }
+
+    .topbar-sep { width: 1px; height: 20px; background: var(--border2); }
+
+    .status-pill {
+      display: flex; align-items: center; gap: 7px;
+      font-size: 11px; letter-spacing: .08em; text-transform: uppercase;
+    }
+
+    .dot {
+      width: 7px; height: 7px; border-radius: 50%;
+      transition: background .3s, box-shadow .3s;
+    }
+    .dot-idle        { background: var(--text3); }
+    .dot-connecting  { background: var(--accent5); box-shadow: 0 0 6px var(--accent5); animation: blink 1s infinite; }
+    .dot-connected   { background: var(--accent2); box-shadow: 0 0 8px var(--accent2); }
+    .dot-error       { background: var(--accent3); box-shadow: 0 0 8px var(--accent3); }
+
+    @keyframes blink { 50% { opacity: .3; } }
+
+    .topbar-conn {
+      display: flex; align-items: center; gap: 8px; margin-left: auto;
+    }
+
+    .inp-sm {
+      background: var(--bg3);
+      border: 1px solid var(--border2);
+      color: var(--text);
+      font-family: var(--ff-mono);
+      font-size: 12px;
+      padding: 5px 8px;
+      border-radius: var(--radius);
+      width: 140px;
+      outline: none;
+      transition: border-color .2s;
+    }
+    .inp-sm:focus { border-color: var(--accent); }
+    .inp-sm.narrow { width: 72px; }
+
+    .btn {
+      font-family: var(--ff-mono);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      padding: 6px 14px;
+      border: 1px solid;
+      border-radius: var(--radius);
+      cursor: pointer;
+      transition: all .15s;
+      background: transparent;
+    }
+    .btn:disabled { opacity: .3; cursor: not-allowed; }
+
+    .btn-connect {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+    .btn-connect:hover:not(:disabled) {
+      background: var(--accent); color: var(--bg);
+    }
+
+    .btn-disconnect {
+      border-color: var(--accent3);
+      color: var(--accent3);
+    }
+    .btn-disconnect:hover:not(:disabled) {
+      background: var(--accent3); color: #fff;
+    }
+
+    /* ─── Sidebar ─────────────────────────────────────────────────────────── */
+    .sidebar {
+      background: var(--bg2);
+      border-right: 1px solid var(--border);
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: var(--border2) transparent;
+      max-width: 280px;
+      z-index: 1;
+    }
+
+    @media screen and (max-width: 1024px)  {
+      .sidebar{
+        position: fixed;
+        left: 0;
+        top: 48px;
+        height: 100%;
+      }
+      
+      .log-panel{
+        position: fixed;
+        right: 0;
+        top: 48px;
+        height: 100%;
+      }
+    }
+
+    .sidebar-section {
+      padding: 6px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .sidebar-label {
+      font-size: 10px;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: var(--text3);
+      padding: 8px 14px 4px;
+    }
+
+    .tab-btn {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      width: 100%;
+      padding: 9px 14px;
+      background: none;
+      border: none;
+      color: var(--text2);
+      font-family: var(--ff-mono);
+      font-size: 12px;
+      cursor: pointer;
+      text-align: left;
+      transition: all .15s;
+      border-left: 2px solid transparent;
+    }
+    .tab-btn:hover { background: var(--bg3); color: var(--text); }
+    .tab-btn.active {
+      color: var(--text);
+      background: var(--bg3);
+    }
+    .tab-btn.active.stream { border-left-color: var(--stream); }
+    .tab-btn.active.cmd    { border-left-color: var(--cmd); }
+    .tab-btn.active.param  { border-left-color: var(--param); }
+    .tab-btn.active.tunnel { border-left-color: var(--tunnel); }
+    .tab-btn.active.state  { border-left-color: var(--state); }
+
+    .tab-dot {
+      width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0;
+    }
+    .td-stream { background: var(--stream); }
+    .td-cmd    { background: var(--cmd); }
+    .td-param  { background: var(--param); }
+    .td-tunnel { background: var(--tunnel); }
+    .td-state  { background: var(--state); }
+
+    /* ─── Transport config in sidebar ─────────────────────────────────────── */
+    .tr-config { padding: 10px 14px; display: flex; flex-direction: column; gap: 6px; }
+    .tr-row { display: flex; align-items: center; gap: 6px; }
+    .tr-row label { font-size: 10px; color: var(--text3); width: 56px; flex-shrink: 0; }
+    .tr-row select, .tr-row input {
+      flex: 1;
+      background: var(--bg3);
+      border: 1px solid var(--border2);
+      color: var(--text);
+      font-family: var(--ff-mono);
+      font-size: 11px;
+      padding: 4px 6px;
+      border-radius: var(--radius);
+      outline: none;
+    }
+    .tr-row select:focus, .tr-row input:focus { border-color: var(--accent); }
+
+    /* ─── Main panel ──────────────────────────────────────────────────────── */
+    .main {
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: var(--border2) transparent;
+      background: var(--bg);
+    }
+
+    .tab-panel { display: none; padding: 24px; }
+    .tab-panel.active { display: block; }
+
+    .panel-title {
+      font-family: var(--ff-head);
+      font-size: 22px;
+      font-weight: 800;
+      margin-bottom: 4px;
+      letter-spacing: -.01em;
+    }
+    .panel-title .badge {
+      display: inline-block;
+      font-size: 10px;
+      font-family: var(--ff-mono);
+      font-weight: 400;
+      padding: 2px 8px;
+      border-radius: 20px;
+      margin-left: 10px;
+      vertical-align: middle;
+      position: relative; top: -2px;
+    }
+    .badge-stream { background: rgba(61,255,192,.12); color: var(--stream); border: 1px solid rgba(61,255,192,.25); }
+    .badge-cmd    { background: rgba(255,159,71,.12);  color: var(--cmd);    border: 1px solid rgba(255,159,71,.25); }
+    .badge-param  { background: rgba(123,140,255,.12); color: var(--param);  border: 1px solid rgba(123,140,255,.25); }
+    .badge-tunnel { background: rgba(255,77,109,.12);  color: var(--tunnel); border: 1px solid rgba(255,77,109,.25); }
+    .badge-state  { background: rgba(232,255,71,.12);  color: var(--state);  border: 1px solid rgba(232,255,71,.25); }
+
+    .panel-desc { color: var(--text2); font-size: 12px; margin-bottom: 24px; }
+
+    /* ─── Sub-sections ────────────────────────────────────────────────────── */
+    .subsection {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius2);
+      margin-bottom: 16px;
+      overflow: hidden;
+    }
+
+    .subsection-head {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg3);
+    }
+
+    .subsection-title {
+      font-size: 11px;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      font-weight: 700;
+    }
+    .st-stream { color: var(--stream); }
+    .st-cmd    { color: var(--cmd); }
+    .st-param  { color: var(--param); }
+    .st-tunnel { color: var(--tunnel); }
+    .st-state  { color: var(--state); }
+
+    .hex-badge {
+      font-size: 10px; color: var(--text3);
+      background: var(--bg); padding: 2px 7px;
+      border-radius: 3px; border: 1px solid var(--border);
+    }
+
+    .subsection-body { padding: 16px; }
+
+    /* ─── Form elements ───────────────────────────────────────────────────── */
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .form-grid.wide { grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); }
+
+    .field { display: flex; flex-direction: column; gap: 4px; }
+
+    .field label {
+      font-size: 10px;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      color: var(--text3);
+    }
+
+    .field input,
+    .field select,
+    .field textarea {
+      background: var(--bg);
+      border: 1px solid var(--border2);
+      color: var(--text);
+      font-family: var(--ff-mono);
+      font-size: 12px;
+      padding: 7px 10px;
+      border-radius: var(--radius);
+      outline: none;
+      transition: border-color .2s;
+      width: 100%;
+    }
+    .field input:focus,
+    .field select:focus,
+    .field textarea:focus { border-color: var(--accent); }
+    .field textarea { resize: vertical; min-height: 60px; }
+
+    .field select option { background: var(--bg2); }
+
+    .addr-preview {
+      font-size: 10px; color: var(--accent2);
+      margin-top: 3px; padding: 2px 4px;
+      border-radius: 2px; background: rgba(61,255,192,.05);
+    }
+    .addr-preview.addr-err { color: var(--accent3); background: rgba(255,77,109,.05); }
+
+    /* ─── Buttons row ─────────────────────────────────────────────────────── */
+    .btn-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+
+    .send-btn {
+      font-family: var(--ff-mono);
+      font-size: 11px; font-weight: 700;
+      letter-spacing: .08em; text-transform: uppercase;
+      padding: 7px 16px;
+      border-radius: var(--radius);
+      cursor: pointer;
+      transition: all .15s;
+      border: 1px solid;
+    }
+    .send-btn:disabled { opacity: .3; cursor: not-allowed; }
+
+    .sb-stream { border-color: var(--stream); color: var(--stream); background: rgba(61,255,192,.05); }
+    .sb-stream:hover:not(:disabled) { background: var(--stream); color: var(--bg); }
+
+    .sb-cmd { border-color: var(--cmd); color: var(--cmd); background: rgba(255,159,71,.05); }
+    .sb-cmd:hover:not(:disabled) { background: var(--cmd); color: var(--bg); }
+
+    .sb-param { border-color: var(--param); color: var(--param); background: rgba(123,140,255,.05); }
+    .sb-param:hover:not(:disabled) { background: var(--param); color: #fff; }
+
+    .sb-tunnel { border-color: var(--tunnel); color: var(--tunnel); background: rgba(255,77,109,.05); }
+    .sb-tunnel:hover:not(:disabled) { background: var(--tunnel); color: #fff; }
+
+    .sb-state { border-color: var(--state); color: var(--state); background: rgba(232,255,71,.05); }
+    .sb-state:hover:not(:disabled) { background: var(--state); color: var(--bg); }
+
+    .btn-ghost {
+      font-family: var(--ff-mono);
+      font-size: 11px; font-weight: 500;
+      padding: 6px 12px;
+      border: 1px solid var(--border2);
+      color: var(--text2);
+      background: transparent;
+      border-radius: var(--radius);
+      cursor: pointer;
+      transition: all .15s;
+    }
+    .btn-ghost:hover { border-color: var(--text2); color: var(--text); }
+
+    /* ─── DMX Channel grid ────────────────────────────────────────────────── */
+    #channel-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(52px, 1fr));
+      gap: 6px;
+      max-height: 340px;
+      overflow-y: auto;
+      padding: 4px;
+    }
+
+    .ch-wrap {
+      display: flex; flex-direction: column; align-items: center; gap: 4px;
+      padding: 8px 4px 6px;
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      transition: border-color .15s;
+    }
+    .ch-wrap:hover { border-color: var(--stream); }
+
+    .ch-num { font-size: 9px; color: var(--text3); letter-spacing: .04em; }
+
+    .ch-track-wrap {
+      width: 10px; height: 80px;
+      background: var(--bg);
+      border-radius: 5px;
+      position: relative;
+      overflow: hidden;
+    }
+    .ch-fill {
+      position: absolute; bottom: 0; left: 0; right: 0;
+      background: linear-gradient(0deg, var(--stream), rgba(61,255,192,.4));
+      border-radius: 5px;
+      transition: height .1s;
+    }
+
+    .ch-slider {
+      writing-mode: vertical-lr;
+      direction: rtl;
+      width: 14px; height: 80px;
+      -webkit-appearance: slider-vertical;
+      appearance: auto;
+      cursor: pointer;
+      opacity: 0;
+      position: absolute;
+      /* overlay on the track */
+    }
+    /* hide native thumb, use track visual only */
+    .ch-track-wrap { cursor: ns-resize; }
+
+    .ch-val { font-size: 9px; color: var(--stream); font-weight: 700; }
+
+    /* ─── Timecode display ────────────────────────────────────────────────── */
+    .tc-display {
+      display: flex; align-items: center; gap: 4px;
+      font-family: var(--ff-head);
+      font-size: 32px; font-weight: 800;
+      letter-spacing: .08em;
+      padding: 12px 0;
+      color: var(--stream);
+    }
+    .tc-seg { min-width: 2ch; text-align: center; }
+    .tc-colon { color: var(--text3); animation: tcblink 1s infinite; }
+    @keyframes tcblink { 50% { opacity: 0; } }
+
+    /* ─── Transport buttons row (playback) ───────────────────────────────── */
+    .pb-transport {
+      display: flex; gap: 6px; margin-bottom: 12px;
+    }
+    .pb-btn {
+      font-family: var(--ff-mono);
+      font-size: 16px;
+      padding: 6px 14px;
+      border: 1px solid var(--border2);
+      background: var(--bg);
+      color: var(--text);
+      border-radius: var(--radius);
+      cursor: pointer;
+      transition: all .15s;
+    }
+    .pb-btn:hover { border-color: var(--cmd); color: var(--cmd); }
+
+    /* ─── Right panel: log ────────────────────────────────────────────────── */
+    .log-panel {
+      background: var(--bg2);
+      border-left: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      overflow: hidden;
+      max-width: 300px;
+    }
+
+    .log-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border);
+      font-size: 10px;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: var(--text3);
+      flex-shrink: 0;
+    }
+    .log-clear { font-size: 10px; background: none; border: none; color: var(--text3); cursor: pointer; }
+    .log-clear:hover { color: var(--accent3); }
+
+    #log {
+      flex: 1;
+      overflow-y: auto;
+      padding: 6px;
+      scrollbar-width: thin;
+      scrollbar-color: var(--border2) transparent;
+    }
+
+    .log-line {
+      display: flex; gap: 8px;
+      padding: 4px 6px;
+      border-radius: 3px;
+      font-size: 11px;
+      line-height: 1.5;
+      margin-bottom: 1px;
+    }
+    .log-line:hover { background: var(--bg3); }
+
+    .log-ts { color: var(--text3); flex-shrink: 0; font-size: 10px; padding-top: 1px; }
+    .log-info    .log-msg { color: var(--text2); }
+    .log-success .log-msg { color: var(--accent2); }
+    .log-error   .log-msg { color: var(--accent3); }
+    .log-warn    .log-msg { color: var(--accent5); }
+
+    /* Debug drawer */
+    .debug-drawer {
+      border-top: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .debug-drawer-head {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 7px 14px;
+      cursor: pointer;
+      font-size: 10px; letter-spacing: .08em; text-transform: uppercase;
+      color: var(--text3);
+      background: var(--bg3);
+    }
+    .debug-drawer-head:hover { color: var(--text); }
+
+    #debug-panel {
+      display: none;
+      height: 160px;
+      overflow-y: auto;
+      padding: 6px;
+      scrollbar-width: thin;
+      scrollbar-color: var(--border2) transparent;
+    }
+    #debug-panel.open { display: block; }
+
+    /* ─── Misc ────────────────────────────────────────────────────────────── */
+    .divider { height: 1px; background: var(--border); margin: 16px 0; }
+
+    .type-matrix {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .type-card {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 10px 12px;
+    }
+    .type-card-name { font-size: 11px; font-weight: 700; margin-bottom: 2px; }
+    .type-card-hex  { font-size: 10px; color: var(--text3); }
+
+    .hint {
+      font-size: 10px; color: var(--text3);
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 6px 10px;
+      margin-bottom: 12px;
+      line-height: 1.6;
+    }
+    .hint code { color: var(--accent4); }
+
+    /* ─── Scrollbar ───────────────────────────────────────────────────────── */
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+  </style>
+</head>
+<body>
+
+<div class="shell">
+
+  <!-- ─── Top bar ─────────────────────────────────────────────────────────── -->
+  <header class="topbar">
+    <div class="topbar-logo">WSC <span>/ SDK v5 Explorer</span></div>
+    <div class="topbar-sep"></div>
+    <div class="status-pill">
+      <div class="dot dot-idle" id="status-dot"></div>
+      <span id="status-label">OFFLINE</span>
+    </div>
+
+    <div class="topbar-conn">
+      <input class="inp-sm" id="remote" placeholder="host / IP" value="127.0.0.1"/>
+      <input class="inp-sm narrow" id="port" placeholder="port" value="4515" type="number"/>
+      <button class="btn btn-connect" id="connect-btn">Connect</button>
+      <button class="btn btn-disconnect" id="disconnect-btn" disabled>Disconnect</button>
+    </div>
+  </header>
+
+  <!-- ─── Sidebar ─────────────────────────────────────────────────────────── -->
+  <nav class="sidebar">
+
+    <!-- Transport config -->
+    <div class="sidebar-section">
+      <div class="sidebar-label">Gateway Transport</div>
+      <div class="tr-config">
+        <div class="tr-row">
+          <label>Protocol</label>
+          <select id="tr-protocol">
+            <option value="ARTNET">ARTNET (0x02)</option>
+            <option value="SACN">sACN (0x03)</option>
+            <option value="OSC">OSC (0x15)</option>
+            <option value="DMX512">DMX512 (0x01)</option>
+            <option value="MSC">MSC (0x12)</option>
+            <option value="MMC">MMC (0x14)</option>
+            <option value="MODBUS">MODBUS (0x30)</option>
+            <option value="HTTP">HTTP (0xF0)</option>
+            <option value="WEBSOCKET">WEBSOCKET (0xF1)</option>
+            <option value="MQTT">MQTT (0xF2)</option>
+            <option value="RAW">RAW (0xFF)</option>
+          </select>
+        </div>
+        <div class="tr-row">
+          <label>Address</label>
+          <input id="tr-address" value="192.168.1.100"/>
+        </div>
+        <div class="tr-row">
+          <label>Port</label>
+          <input id="tr-port" type="number" value="6454"/>
+        </div>
+      </div>
+    </div>
+
+    <!-- Nav items -->
+    <div class="sidebar-section">
+      <div class="sidebar-label">Streaming 0x1000</div>
+      <button class="tab-btn stream active" data-tab="channels">
+        <span class="tab-dot td-stream"></span>STREAM_CHANNELS
+      </button>
+      <button class="tab-btn stream" data-tab="timecode">
+        <span class="tab-dot td-stream"></span>STREAM_TIMECODE
+      </button>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-label">Control 0x2000</div>
+      <button class="tab-btn cmd" data-tab="cue">
+        <span class="tab-dot td-param"></span>CONTROL_CUE
+      </button>
+      <button class="tab-btn param" data-tab="param-set">
+        <span class="tab-dot td-param"></span>CONTROL_PARAM
+      </button>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-label">Tunnel 0x4000</div>
+      <button class="tab-btn tunnel" data-tab="tunnel">
+        <span class="tab-dot td-tunnel"></span>TUNNEL_RAW
+      </button>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-label">State 0xF000</div>
+      <button class="tab-btn state" data-tab="state-query">
+        <span class="tab-dot td-state"></span>STATE_QUERY
+      </button>
+    </div>
+
+  </nav>
+
+  <!-- ─── Main panel ──────────────────────────────────────────────────────── -->
+  <main class="main">
+
+    <!-- ═══ STREAM_CHANNELS ════════════════════════════════════════════════ -->
+    <div class="tab-panel active" id="tab-channels">
+      <div class="panel-title">STREAM_CHANNELS <span class="badge badge-stream">0x1000</span></div>
+      <div class="panel-desc">Bulk channel values for DMX universes, kinetics, or any indexed channel array.</div>
+
+      <div class="subsection">
+        <div class="subsection-head">
+          <span class="subsection-title st-stream">Universe Config</span>
+          <span class="hex-badge">universe · startChannel · values[]</span>
+        </div>
+        <div class="subsection-body">
+          <div class="form-grid">
+            <div class="field">
+              <label>Universe</label>
+              <input id="dmx-universe" type="number" value="0"/>
+            </div>
+            <div class="field">
+              <label>Start Channel</label>
+              <input id="dmx-start-ch" type="number" value="1" min="1" max="512"/>
+            </div>
+          </div>
+          <div class="btn-row" style="margin-bottom:12px">
+            <button class="btn-ghost" id="dmx-16ch">16 CH</button>
+            <button class="btn-ghost" id="dmx-32ch">32 CH</button>
+            <button class="btn-ghost" id="dmx-blackout">Blackout</button>
+            <button class="btn-ghost" id="dmx-full">Full</button>
+            <button class="btn-ghost" id="dmx-half">Half</button>
+            <button class="btn-ghost" id="dmx-random">Random</button>
+            <button class="btn-ghost" id="dmx-chase">Chase ▶</button>
+          </div>
+          <div id="channel-grid"></div>
+          <div class="btn-row" style="margin-top:12px">
+            <button class="send-btn sb-stream" id="dmx-send-frame" disabled>↑ Send Frame</button>
+            <button class="btn-ghost" id="dmx-auto-btn">Start Auto-Send</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ STREAM_TIMECODE ════════════════════════════════════════════════ -->
+    <div class="tab-panel" id="tab-timecode">
+      <div class="panel-title">STREAM_TIMECODE <span class="badge badge-stream">0x1003</span></div>
+      <div class="panel-desc">Linear timecode streaming — SMPTE / MTC frame-accurate sync.</div>
+
+      <div class="subsection">
+        <div class="subsection-head">
+          <span class="subsection-title st-stream">Timecode Frame</span>
+          <span class="hex-badge">HH:MM:SS:FF @ rate</span>
+        </div>
+        <div class="subsection-body">
+          <div class="tc-display">
+            <span class="tc-seg" id="tc-disp-h">00</span>
+            <span class="tc-colon">:</span>
+            <span class="tc-seg" id="tc-disp-m">00</span>
+            <span class="tc-colon">:</span>
+            <span class="tc-seg" id="tc-disp-s">00</span>
+            <span class="tc-colon">:</span>
+            <span class="tc-seg" id="tc-disp-f">00</span>
+          </div>
+          <div class="form-grid">
+            <div class="field"><label>Hours</label>
+              <input id="tc-h" type="number" min="0" max="23" value="0"/></div>
+            <div class="field"><label>Minutes</label>
+              <input id="tc-m" type="number" min="0" max="59" value="0"/></div>
+            <div class="field"><label>Seconds</label>
+              <input id="tc-s" type="number" min="0" max="59" value="0"/></div>
+            <div class="field"><label>Frames</label>
+              <input id="tc-f" type="number" min="0" max="119" value="0"/></div>
+            <div class="field"><label>Frame Rate</label>
+              <select id="tc-rate">
+                <option value="24">24fps</option>
+                <option value="25">25fps</option>
+                <option value="30" selected>30fps</option>
+                <option value="60">60fps</option>
+              </select>
+            </div>
+          </div>
+          <div class="btn-row">
+            <button class="send-btn sb-stream" id="btn-timecode" disabled>↑ Send Timecode</button>
+            <button class="btn-ghost" id="btn-tc-run">▶ Run TC</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ STREAM_SENSOR ═════════════════════════════════════════════════ -->
+    <div class="tab-panel" id="tab-sensor">
+      <div class="panel-title">STREAM_SENSOR <span class="badge badge-stream">0x1002</span></div>
+      <div class="panel-desc">Generic sensor reading — proximity, temperature, acceleration, custom hardware.</div>
+
+      <div class="hint">
+        <code>sensorId</code> is a free-form string identifier.
+        <code>sensorType</code> is application-defined (0 = generic).
+        <code>unit</code> is application-defined (0 = none).
+      </div>
+
+      <div class="subsection">
+        <div class="subsection-head">
+          <span class="subsection-title st-stream">Sensor Reading</span>
+          <span class="hex-badge">sensorId · sensorType · value · unit</span>
+        </div>
+        <div class="subsection-body">
+          <div class="form-grid">
+            <div class="field"><label>Sensor ID</label>
+              <input id="sensor-id" value="sensor.proximity.1"/></div>
+            <div class="field"><label>Sensor Type</label>
+              <input id="sensor-type" type="number" value="0"/></div>
+            <div class="field"><label>Value (float)</label>
+              <input id="sensor-value" type="number" step="0.01" value="1.0"/></div>
+            <div class="field"><label>Unit</label>
+              <input id="sensor-unit" type="number" value="0"/></div>
+          </div>
+          <div class="btn-row">
+            <button class="send-btn sb-stream" id="btn-sensor" disabled>↑ Send Sensor</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ STREAM_ANALYSIS ═══════════════════════════════════════════════ -->
+    <div class="tab-panel" id="tab-analysis">
+      <div class="panel-title">STREAM_ANALYSIS <span class="badge badge-stream">0x1005</span></div>
+      <div class="panel-desc">Arbitrary JSON analysis data — audio level meters, video histograms, AI inference results.</div>
+
+      <div class="subsection">
+        <div class="subsection-head">
+          <span class="subsection-title st-stream">Analysis Payload</span>
+          <span class="hex-badge">data (JSON)</span>
+        </div>
+        <div class="subsection-body">
+          <div class="field" style="margin-bottom:12px">
+            <label>JSON Data</label>
+            <textarea id="analysis-data" rows="5">{"rms": -18.5, "peak": -6.2, "fps": 59.94, "dropframes": 0}</textarea>
+          </div>
+          <div class="btn-row">
+            <button class="send-btn sb-stream" id="btn-analysis" disabled>↑ Send Analysis</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ CONTROL_CUE ════════════════════════════════════════════════════════ -->
+    <div class="tab-panel" id="tab-cue">
+      <div class="panel-title">CONTROL_CUE <span class="badge badge-param">0x2000</span></div>
+      <div class="panel-desc">Trigger a cue-list action — LOAD, START, STOP, PAUSE, RESUME, or RELEASE — on a domain-agnostic address.</div>
+
+      <div class="hint">
+        Address uses dot-notation: <code>lighting.cue.42</code> · <code>audio.scene.3</code> · <code>video.layer.1.clip.4</code>
+      </div>
+
+      <div class="subsection">
+        <div class="subsection-head">
+          <span class="subsection-title st-param">Cue Action</span>
+          <span class="hex-badge">address · action</span>
+        </div>
+        <div class="subsection-body">
+          <div class="form-grid wide">
+            <div class="field">
+              <label>Address</label>
+              <input id="cue-address" value="lighting.cue.42"/>
+              <div class="addr-preview" data-for="cue-address"></div>
+            </div>
+            <div class="field">
+              <label>Action</label>
+              <select id="cue-action">
+                <option value="0">LOAD (0x00)</option>
+                <option value="1" selected>START (0x01)</option>
+                <option value="2">STOP (0x02)</option>
+                <option value="3">PAUSE (0x03)</option>
+                <option value="4">RESUME (0x04)</option>
+                <option value="5">RELEASE (0x05)</option>
+              </select>
+            </div>
+          </div>
+          <div class="btn-row">
+            <button class="send-btn sb-param" id="btn-cue" disabled>↑ Send CONTROL_CUE</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ CONTROL_PARAM ══════════════════════════════════════════════════════ -->
+    <div class="tab-panel" id="tab-param-set">
+      <div class="panel-title">CONTROL_PARAM <span class="badge badge-param">0x2001</span></div>
+      <div class="panel-desc">Set a named parameter to an exact typed value.</div>
+
+      <div class="hint">
+        Address examples: <code>lighting.layer.2.intensity</code> · <code>audio.track.3.send.1.send_level</code> · <code>motion.axis.1.position</code>
+      </div>
+
+      <div class="subsection">
+        <div class="subsection-head">
+          <span class="subsection-title st-param">Set Value</span>
+          <span class="hex-badge">address · valueType · value</span>
+        </div>
+        <div class="subsection-body">
+          <div class="form-grid wide">
+            <div class="field">
+              <label>Address</label>
+              <input id="ps-address" value="lighting.layer.2.intensity"/>
+              <div class="addr-preview" data-for="ps-address"></div>
+            </div>
+            <div class="field">
+              <label>Value Type</label>
+              <select id="ps-vtype">
+                <option value="F32" selected>F32 — float 32</option>
+                <option value="F64">F64 — float 64</option>
+                <option value="U8">U8 — uint 8</option>
+                <option value="U16">U16 — uint 16</option>
+                <option value="U32">U32 — uint 32</option>
+                <option value="I8">I8 — int 8</option>
+                <option value="I16">I16 — int 16</option>
+                <option value="I32">I32 — int 32</option>
+                <option value="BOOL">BOOL — boolean</option>
+                <option value="STRING">STRING — text</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Value</label>
+              <input id="ps-value" value="0.75"/>
+            </div>
+          </div>
+          <div class="btn-row">
+            <button class="send-btn sb-param" id="btn-param-set" disabled>↑ Send CONTROL_PARAM</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ TUNNEL_RAW ═════════════════════════════════════════════════════ -->
+    <div class="tab-panel" id="tab-tunnel">
+      <div class="panel-title">TUNNEL_RAW <span class="badge badge-tunnel">0x4000</span></div>
+      <div class="panel-desc">Opaque binary passthrough — must use transport protocol RAW. Carries uninterpreted bytes end-to-end.</div>
+
+      <div class="subsection">
+        <div class="subsection-head">
+          <span class="subsection-title st-tunnel">Raw Payload</span>
+          <span class="hex-badge">raw bytes</span>
+        </div>
+        <div class="subsection-body">
+          <div class="hint">
+            TUNNEL_RAW forces <code>WscTransport.Protocol.RAW</code> regardless of the gateway transport config above.
+          </div>
+          <div class="form-grid">
+            <div class="field">
+              <label>Format</label>
+              <select id="tunnel-fmt">
+                <option value="text">UTF-8 text</option>
+                <option value="hex">Hex bytes</option>
+              </select>
+            </div>
+          </div>
+          <div class="field" style="margin-bottom:12px">
+            <label>Data</label>
+            <textarea id="tunnel-data" rows="4">Hello, WSC tunnel!</textarea>
+          </div>
+          <div class="btn-row">
+            <button class="send-btn sb-tunnel" id="btn-tunnel" disabled>↑ Send TUNNEL_RAW</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ STATE_QUERY ════════════════════════════════════════════════════ -->
+    <div class="tab-panel" id="tab-state-query">
+      <div class="panel-title">STATE_QUERY <span class="badge badge-state">0xF000</span></div>
+      <div class="panel-desc">Protocol housekeeping — query device state, keepalive, subscribe, or heartbeat.</div>
+
+      <div class="subsection">
+        <div class="subsection-head">
+          <span class="subsection-title st-state">STATE_QUERY</span>
+          <span class="hex-badge">0xF000 · queryType · targetId</span>
+        </div>
+        <div class="subsection-body">
+          <div class="form-grid">
+            <div class="field">
+              <label>Query Type</label>
+              <select id="query-type">
+                <option value="0">KEEPALIVE (0x0000)</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Target ID</label>
+              <input id="query-target" placeholder="(empty = all)"/>
+            </div>
+          </div>
+          <div class="btn-row">
+            <button class="send-btn sb-state" id="btn-query" disabled>↑ Send STATE_QUERY</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="subsection" style="margin-top:16px">
+        <div class="subsection-head">
+          <span class="subsection-title st-state">Automatic Keepalive</span>
+          <span class="hex-badge">loop · interval</span>
+        </div>
+        <div class="subsection-body">
+          <div class="form-grid">
+            <div class="field">
+              <label>Interval (ms)</label>
+              <input id="ka-interval" type="number" value="1000" min="100"/>
+            </div>
+          </div>
+          <div class="btn-row">
+            <button class="btn-ghost" id="btn-ka-toggle">Start Keepalive</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- ─── Right panel: log ─────────────────────────────────────────────────── -->
+  <aside class="log-panel">
+    <div class="log-header">
+      <span>Packet Log</span>
+      <button class="log-clear" id="log-clear">clear</button>
+    </div>
+    <div id="log"></div>
+
+    <div class="debug-drawer">
+      <div class="debug-drawer-head" id="debug-toggle">
+        <span>▼ Debug</span>
+      </div>
+      <div id="debug-panel">
+        <div id="debug-log"></div>
+      </div>
+    </div>
+  </aside>
+
+</div><!-- .shell -->
+
+<script>
+  // Timecode display sync (before module loads)
+  ['tc-h','tc-m','tc-s','tc-f'].forEach((id, i) => {
+    const targets = ['tc-disp-h','tc-disp-m','tc-disp-s','tc-disp-f'];
+    const inp = document.getElementById(id);
+    const disp = document.getElementById(targets[i]);
+    if (!inp || !disp) return;
+    inp.addEventListener('input', () => {
+      disp.textContent = String(inp.value).padStart(2,'0');
+    });
+  });
+
+  document.getElementById('log-clear').addEventListener('click', () => {
+    document.getElementById('log').innerHTML = '';
+  });
+</script>
+
+<script type="module" src="./wsc.client.example.js"></script>
+</body>
+</html>

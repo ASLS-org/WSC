@@ -1,0 +1,33 @@
+{
+  "version": "1.0.0",
+  "name": "@asls-org/wsc-server",
+  "type": "module",
+  "private": true,
+  "publishConfig": {
+    "access": "public"
+  },
+  "description": "ASLS's WSC (Web Show Control) server",
+  "engines": {
+    "node": ">=20"
+  },
+  "os": [
+    "darwin",
+    "linux",
+    "windows"
+  ],
+  "main": "./src/main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "tsx watch ./src/main.js",
+    "start": "node ./src/main.js"
+  },
+  "author": "Timé Kadel",
+  "license": "GPL-3.0-only",
+  "dependencies": {
+    "@asls-org/wsc-sdk": "0.0.0",
+    "@roamhq/wrtc": "^0.8.0",
+    "dotenv": "^17.2.4",
+    "systeminformation": "^5.31.5",
+    "ws": "^8.11.0"
+  }
+}

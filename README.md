@@ -1,174 +1,150 @@
-# ASLS WSC Server
+# Web Show Control (WSC)
 
-ASLS WSC Server is a Node.js application that bridges Web Show Control (WSC) DMX packets to various lighting protocols, with current support for Art-Net. It enables seamless communication between web-based lighting control interfaces and traditional DMX lighting systems.
+> A compact, binary, transport-agnostic protocol for real-time control of performance and show systems.
 
-```
-      ___           ___           ___       ___      
-     /  /\         /  /\         /  /\     /  /\     
-    /  /::\       /  /::\       /  /:/    /  /::\    
-   /  /:/\:\     /__/:/\:\     /  /:/    /__/:/\:\   
-  /  /::\\ \:\   _\_ \:\ \:\   /  /:/    _\_ \:\ \:\  
- /__/:/\:\_\:\ /__/\ \:\ \:\ /__/:/    /__/\ \:\ \:\ 
- \__\/  \:\/:/ \  \:\ \:\_\/ \  \:\    \  \:\ \:\_\/ 
-      \__\::/   \  \:\_\:\    \  \:\    \  \:\_\:\   
-      /  /:/     \  \:\/::/     \  \:\    \  \:\/::/   
-     /__/:/       \  \::/       \  \:\    \  \::/    
-     \__\/         \__\/         \__\/     \__\/     
-```
+WSC provides a single wire format that carries DMX channel data, linear timecode, discrete cue commands, typed parameter writes, and opaque binary tunnels — all forwardable to industry downstream protocols (Art-Net, sACN, OSC, MIDI, Modbus, and others) by a gateway node.
 
-- [ASLS WSC Server](#asls-wsc-server)
-  - [Features](#features)
-  - [Prerequisites](#prerequisites)
-  - [Installation](#installation)
-  - [Configuration](#configuration)
-  - [Usage](#usage)
-    - [Command Line Interface](#command-line-interface)
-      - [CLI Options](#cli-options)
-    - [Programmatic Usage](#programmatic-usage)
-    - [Data Flow](#data-flow)
-  - [Protocol Support](#protocol-support)
-    - [Current Implementation](#current-implementation)
-    - [Packet Structure](#packet-structure)
-  - [License](#license)
-  - [Contributing](#contributing)
-  - [Acknowledgments](#acknowledgments)
-  - [Support](#support)
+---
 
-
-## Features
-
-- WebRTC-based DMX data transmission
-- Art-Net protocol support
-- Real-time packet conversion and forwarding
-- Websocket signaling for connection establishment
-- Broadcast capability for network-wide DMX distribution
-
-## Prerequisites
-
-- Node.js (v12.0.0 or higher)
-- npm or yarn package manager
-
-## Installation
-
-1. Clone the repository:
-```bash
-git clone https://github.com/ASLS-org/asls-server
-cd asls-server
-```
-
-2. Install dependencies:
-```bash
-npm install
-```
-
-## Configuration
-
-Default configuration:
-- WebSocket signaling port: 5214
-- Art-Net UDP port: 6454
-
-These values can be modified when initializing the server.
-
-## Usage
-
-### Command Line Interface
-
-The server can be started using the CLI with optional port configurations:
-
-```bash
-# Start with default ports
-DMXWebRTC
-
-# Configure WebSocket port
-DMXWebRTC -w 5215
-
-# Configure UDP port
-DMXWebRTC -u 6455
-
-# Configure both ports
-DMXWebRTC -w 5215 -u 6455
-
-# Show help
-DMXWebRTC --help
-```
-
-#### CLI Options
+## Repository Structure
 
 ```
-Usage: DMXWebRTC -w <web_socket_port> -u <udp_port>
-
-Options:
-  -w, --websocket-port  Sets up port number of the web socket server instance
-                        used for signaling
-  -u, --udp-port        Port number of the ArtNET server from which data will
-                        be intercepted and/or forwarded through WebRTC
-  --help                Show help information
+wsc/
+├── README.md                        ← you are here
+│
+├── core/                            ← normative protocol specification
+│   ├── README.md
+│   └── spec/
+│       ├── 01-architecture.md
+│       ├── 02-packet-format.md
+│       ├── 03-address-system.md
+│       ├── 04-message-types.md
+│       ├── 05-transport-descriptor.md
+│       ├── 06-session.md
+│       ├── 07-error-handling.md
+│       ├── 08-versioning.md
+│       └── CHANGELOG.md
+│
+├── bindings/                        ← language bindings (wire format only, no I/O)
+│   ├── README.md
+│   └── js/
+│       └── sdk/                     ← @asls-org/wsc-sdk
+│
+└── implementations/                 ← runnable clients and gateways
+    ├── README.md
+    └── js/
+        ├── README.md
+        ├── client/                  ← browser / Node.js WebRTC client
+        └── server/                  ← Node.js gateway
 ```
 
-### Programmatic Usage
+---
 
-```javascript
-const DMXWebRTC = require('./DMXWebRTC');
+## Protocol at a Glance
 
-// Initialize with default ports
-DMXWebRTC.init();
+| Property | Value |
+|---|---|
+| Protocol version | `1.1.0` |
+| Header size | 19 bytes (fixed) |
+| Byte order | Big-endian |
+| Primary transport | WebRTC DataChannel (reference implementation) |
+| Max payload | 65 535 bytes |
 
-// Or initialize with custom ports
-DMXWebRTC.init(wsPort, udpPort);
-```
+### Message types
 
-### Data Flow
+| Type | Code | Description |
+|---|---|---|
+| `STREAM_CHANNELS` | `0x1000` | Bulk channel values — DMX universes, kinetics, indexed arrays |
+| `STREAM_TIMECODE` | `0x1003` | Linear timecode — SMPTE / MTC |
+| `CONTROL_CUE` | `0x2000` | Lifecycle action (GO, STOP, PAUSE…) on an addressed target |
+| `CONTROL_PARAM` | `0x2001` | Typed named-parameter write |
+| `TUNNEL_RAW` | `0xE000` | Opaque binary passthrough to a downstream system |
+| `STATE_QUERY` | `0xF000` | Request state from the remote peer |
+| `STATE_ANSWER` | `0xF001` | Response to a query |
+| `STATE_ERROR` | `0xF004` | Protocol or routing error |
 
-1. Client connects via WebSocket for signaling
-2. WebRTC data channel is established
-3. DMX data is transmitted through the WebRTC channel
-4. Server converts and forwards packets to Art-Net devices
+### Downstream protocols (selection)
 
-## Protocol Support
+Art-Net · sACN · DMX512 · RDM · KiNET · MIDI · MIDI 2.0 · MIDI Show Control · MIDI Timecode · OSC · NDI · VISCA · Modbus · CANopen · EtherCAT · PROFINET · GPI/GPO · Tally · HTTP · WebSocket · MQTT · RAW
 
-### Current Implementation
-- Art-Net (OpCode: 0x5000)
-  - Universe: 0-32767
-  - Channels: 512 per universe
-  - Supports standard DMX512 data format
+---
 
-### Packet Structure
+## Documentation
 
-Art-Net DMX packet structure:
-```
-0                   1                   2                   3
-0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-|      'A'      |      'r'      |      't'      |      '-'      |
-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-|      'N'      |      'e'      |      't'      |     0x00      |
-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-|   OpCode Lo   |   OpCode Hi   |  ProtVer Hi   |  ProtVer Lo   |
-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-|   Sequence    |   Physical    |    SubUni     |     Net       |
-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-|    Length Hi  |    Length Lo  |                               |
-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+                               |
-|                                                               |
-/                            DMX Data                           /
-|                                                               |
-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-```
+### Protocol Specification
+
+The normative specification is in [`core/`](core/README.md). Start here to understand the wire format, addressing scheme, and session model before writing a binding or implementation.
+
+| Document | Summary |
+|---|---|
+| [01 — Architecture](core/spec/01-architecture.md) | Components, data flow, deployment topology |
+| [02 — Packet Format](core/spec/02-packet-format.md) | Wire layout, header, flags |
+| [03 — Address System](core/spec/03-address-system.md) | Hierarchical token addressing |
+| [04 — Message Types](core/spec/04-message-types.md) | All 8 types with payload schemas |
+| [05 — Transport Descriptor](core/spec/05-transport-descriptor.md) | Downstream routing, compatibility matrices |
+| [06 — Session](core/spec/06-session.md) | Connection lifecycle, keepalive, sequencing |
+| [07 — Error Handling](core/spec/07-error-handling.md) | Error codes, receiver obligations |
+| [08 — Versioning](core/spec/08-versioning.md) | Semver rules, reserved ranges |
+| [CHANGELOG](core/spec/CHANGELOG.md) | Protocol version history |
+
+### Bindings
+
+Bindings implement the WSC wire format in a specific language with no I/O.
+
+| Language | Path | Status |
+|---|---|---|
+| JavaScript / TypeScript | [`bindings/js/`](bindings/js/) | Stable |
+
+→ [Bindings overview and contribution guide](bindings/README.md)
+
+### Implementations
+
+Implementations provide runnable clients and gateways built on top of a binding.
+
+| Language | Path | Status |
+|---|---|---|
+| JavaScript | [`implementations/js/`](implementations/js/README.md) | Stable |
+
+→ [Implementations overview and contribution guide](implementations/README.md)
+
+---
+
+## Getting Started
+
+**To run a gateway and connect a client** — go to the JavaScript implementation:
+
+- [JavaScript implementation](implementations/js/README.md)
+
+**To use WSC in your own project** — install the binding and follow the quick-start:
+
+- [Bindings overview](bindings/README.md)
+
+**To port WSC to a new language** — read the spec, then the bindings contribution guide:
+
+- [Protocol spec](core/README.md)
+- [Bindings contribution guide](bindings/README.md)
+
+**To understand the wire format** — start with:
+
+- [Packet Format](core/spec/02-packet-format.md)
+- [Message Types](core/spec/04-message-types.md)
+
+---
+
+## Design Principles
+
+**Transport-agnostic.** The wire format does not mandate a transport. The reference implementation uses WebRTC DataChannel; others may use TCP, WebSocket, or serial.
+
+**Stateless gateway routing.** Every forwarded packet carries a complete Transport Descriptor. The gateway holds no per-client routing state.
+
+**Compact by design.** The 19-byte fixed header and token-based address encoding keep packets small enough for 44 Hz+ DMX streaming without fragmentation.
+
+**Separation of concerns.** Bindings (wire format) and implementations (transport + session) are separate packages. Porting to a new language requires only implementing the binding.
+
+**Unified control path.** Cue actions and parameter writes share the Control range (`0x2000 – 0x2FFF`) and route through the same gateway module, simplifying dispatcher logic.
+
+---
 
 ## License
 
-This project is licensed under the GNU General Public License v3.0 - see the COPYING file for details.
-
-## Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
-
-## Acknowledgments
-
-- Built with Node.js
-- Uses WebRTC for reliable data transmission
-- Implements Art-Net protocol specifications
-
-## Support
-
-For issues and feature requests, please create an issue in the repository.
+See `COPYING`.

@@ -1,0 +1,24 @@
+{
+  "editor.formatOnPaste": false, // required
+  "editor.formatOnType": false, // required
+  "editor.formatOnSave": true, // optional
+  "editor.formatOnSaveMode": "file", // required to format on save
+  "vs-code-prettier-eslint.prettierLast": false, // set as "true" to run 'prettier' last not first
+  "files.insertFinalNewline": true, //Add newline at EoF
+  "editor.tabSize": 2,
+  // "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "always"
+  },
+  "eslint.validate": ["javascript", "typescript"],
+  "[javascript]": {
+    // "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.formatOnSave": true
+  },
+  "editor.rulers": [100], // add ruler to max line length
+  "prettier.singleQuote": true,
+  "json.format.enable": true,
+  "javascript.format.enable": true,
+  "jest.runMode": "on-demand",
+  "codetogether.virtualCursorJoin": "sharedVirtualCursor"
+}

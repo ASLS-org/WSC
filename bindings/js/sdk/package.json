@@ -1,0 +1,34 @@
+{
+  "version": "1.0.0",
+  "name": "@asls-org/wsc-sdk",
+  "type": "module",
+  "private": false,
+  "publishConfig": {
+    "access": "public"
+  },
+  "description": "ASLS's WSC Web Show Control) Web SDK ",
+  "engines": {
+    "node": ">=20"
+  },
+  "os": [
+    "darwin",
+    "linux",
+    "windows"
+  ],
+  "main": "./src/main.js",
+  "exports": {
+    ".": "./src/main.js"
+  },
+  "files": [
+    "src"
+  ],
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "echo \"Nothing to do\""
+  },
+  "author": "Timé Kadel",
+  "license": "GPL-3.0-only",
+  "dependencies": {
+    "vite": "^7.3.1"
+  }
+}

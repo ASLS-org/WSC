@@ -2,29 +2,31 @@ name: Release
 
 on:
   push:
-    branches: [ main, staging ]
-
-permissions:
-  contents: read # for checkout
+    branches:
+      - main
+      - staging
 
 jobs:
   release:
-    name: Release
     runs-on: ubuntu-latest
+
     permissions:
-      contents: write # to be able to publish a GitHub release
-      id-token: write # to enable use of OIDC for npm provenance
+      contents: write
+
     steps:
-      - name: Checkout
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
+
+      - uses: actions/setup-node@v4
         with:
-          node-version: "lts/*"
-      - name: Creating a release and publish to NPM...
+          node-version: 20
+          registry-url: https://registry.npmjs.org
+
+      - run: npm install
+
+      - name: Release
+        run: npx semantic-release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: npx semantic-release
