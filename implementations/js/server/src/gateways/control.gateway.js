@@ -1,4 +1,4 @@
-import { WscPacket, WscTransport } from '@asls-org/wsc-sdk';
+import { WscPacket, WscTransport } from '@asls/wsc-sdk';
 import OscUdpForwarder from '../protocols/osc/osc.udp';
 import AbstractWscGateway from './abstract.gateway';
 

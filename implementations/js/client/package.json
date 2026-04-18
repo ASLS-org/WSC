@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "name": "@asls-org/wsc-client",
+  "name": "@asls/wsc-client",
   "type": "module",
   "private": false,
   "publishConfig": {
@@ -29,7 +29,7 @@
   "author": "Timé Kadel",
   "license": "GPL-3.0-only",
   "dependencies": {
-    "@asls-org/wsc-sdk": "*"
+    "@asls/wsc-sdk": "*"
   },
   "devDependencies": {
     "vite": "^7.3.1"

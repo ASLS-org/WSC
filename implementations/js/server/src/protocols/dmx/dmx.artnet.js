@@ -1,7 +1,7 @@
 /* eslint-disable max-classes-per-file */
 
 import Dgram from 'dgram';
-import { WscPacket, WscTransport, combineToUInt16 } from '@asls-org/wsc-sdk';
+import { WscPacket, WscTransport, combineToUInt16 } from '@asls/wsc-sdk';
 import Logger from '../../utils/logger.js';
 
 /**

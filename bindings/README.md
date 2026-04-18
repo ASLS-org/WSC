@@ -34,7 +34,7 @@ A **binding** is a language-specific, I/O-free implementation of the WSC wire fo
 
 ## JavaScript Binding — Overview
 
-The JS binding lives at `bindings/js/sdk/` and is published as `@asls-org/wsc-sdk`. It exposes the full WSC surface as ES module classes.
+The JS binding lives at `bindings/js/sdk/` and is published as `@asls/wsc-sdk`. It exposes the full WSC surface as ES module classes.
 
 ### Public API
 

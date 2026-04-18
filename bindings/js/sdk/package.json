@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "name": "@asls-org/wsc-sdk",
+  "name": "@asls/wsc-sdk",
   "type": "module",
   "private": false,
   "publishConfig": {

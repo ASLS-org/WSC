@@ -1,5 +1,5 @@
 /* eslint-disable max-classes-per-file */
-import { WscFlags, WscPacket } from '@asls-org/wsc-sdk';
+import { WscFlags, WscPacket } from '@asls/wsc-sdk';
 
 /**
  * WSC DMX DataChannel name

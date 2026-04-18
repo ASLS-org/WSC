@@ -4,12 +4,12 @@
     "target": "ES2022",
     "module": "ESNext",
     "paths": {
-      "@asls-org/wsc-sdk": ["./bindings/js/sdk/src/main.js"],
-      "@asls-org/wsc-sdk/*": ["./bindings/js/sdk/src/*"],
-      "@asls-org/wsc-server": ["./implementations/js/server/src/main.js"],
-      "@asls-org/wsc-server/*": ["./implementations/js/server/src/*"],
-      "@asls-org/wsc-client": ["./implementations/js/client/src/main.js"],
-      "@asls-org/wsc-client/*": ["./implementations/js/client/src/*"]
+      "@asls/wsc-sdk": ["./bindings/js/sdk/src/main.js"],
+      "@asls/wsc-sdk/*": ["./bindings/js/sdk/src/*"],
+      "@asls/wsc-server": ["./implementations/js/server/src/main.js"],
+      "@asls/wsc-server/*": ["./implementations/js/server/src/*"],
+      "@asls/wsc-client": ["./implementations/js/client/src/main.js"],
+      "@asls/wsc-client/*": ["./implementations/js/client/src/*"]
     }
   },
   "include": ["./**/*.js"]

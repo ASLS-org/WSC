@@ -2,7 +2,7 @@
 
 Getting-started guide for the JavaScript client and gateway.
 
-**Binding:** [`bindings/js/sdk/`](../../bindings/js/sdk/) (`@asls-org/wsc-sdk`)  
+**Binding:** [`bindings/js/sdk/`](../../bindings/js/sdk/) (`@asls/wsc-sdk`)  
 **Protocol version:** 1.1.0  
 **Runtime:** Node.js ≥ 20 (gateway) · Any modern browser or Node.js ≥ 20 (client)
 
@@ -121,7 +121,7 @@ Import the client and the SDK binding:
 
 ```js
 import { WscClient, WSC_REMOTE_STATE, KEEPALIVE_INTERVAL } from './src/main.js';
-import { WscPacket, WscTransport, WscFlags, WscAddress } from '@asls-org/wsc-sdk';
+import { WscPacket, WscTransport, WscFlags, WscAddress } from '@asls/wsc-sdk';
 ```
 
 ### 1. Connect to a gateway

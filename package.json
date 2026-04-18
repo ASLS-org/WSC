@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "name": "@asls-org/wsc",
+  "name": "@asls/wsc",
   "type": "module",
   "private": true,
   "description": "ASLS's WSC protocol (Web Show Control)",
@@ -19,8 +19,8 @@
   ],
   "scripts": {
     "dev": "npm run dev --workspaces --parallel",
-    "dev:client": "npm run dev --workspace=@asls-org/wsc-client",
-    "dev:server": "npm run dev --workspace=@asls-org/wsc-server",
+    "dev:client": "npm run dev --workspace=@asls/wsc-client",
+    "dev:server": "npm run dev --workspace=@asls/wsc-server",
     "lint": "npm run lint --workspaces",
     "lint:fix": "npm run lint:fix --workspaces",
     "format": "prettier --write .",

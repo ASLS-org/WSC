@@ -28,7 +28,7 @@ wsc/
 ├── bindings/                        ← language bindings (wire format only, no I/O)
 │   ├── README.md
 │   └── js/
-│       └── sdk/                     ← @asls-org/wsc-sdk
+│       └── sdk/                     ← @asls/wsc-sdk
 │
 └── implementations/                 ← runnable clients and gateways
     ├── README.md

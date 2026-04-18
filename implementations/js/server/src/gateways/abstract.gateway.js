@@ -1,4 +1,4 @@
-import { WscError, WscPacket } from '@asls-org/wsc-sdk';
+import { WscError, WscPacket } from '@asls/wsc-sdk';
 
 export default class AbstractWscGateway {
   /**

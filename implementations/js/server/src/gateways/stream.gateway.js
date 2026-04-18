@@ -1,4 +1,4 @@
-import { WscError, WscPacket, WscTransport } from '@asls-org/wsc-sdk';
+import { WscError, WscPacket, WscTransport } from '@asls/wsc-sdk';
 import ArtnetForwarder from '../protocols/dmx/dmx.artnet';
 import AbstractWscGateway from './abstract.gateway';
 

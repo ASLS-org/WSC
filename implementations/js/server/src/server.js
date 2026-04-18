@@ -1,4 +1,4 @@
-import { WscPacket, WscError } from '@asls-org/wsc-sdk';
+import { WscPacket, WscError } from '@asls/wsc-sdk';
 import SignalingServer from './signaling';
 import Logger from './utils/logger';
 import WscStreamGateway from './gateways/stream.gateway';

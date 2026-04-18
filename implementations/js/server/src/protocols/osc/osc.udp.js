@@ -5,7 +5,7 @@ import {
   WscError,
   WscPacket,
   WscTransport,
-} from '@asls-org/wsc-sdk';
+} from '@asls/wsc-sdk';
 import { TextEncoder } from 'util';
 import Logger from '../../utils/logger.js';
 import AbstractWscGateway from '../../gateways/abstract.gateway.js';

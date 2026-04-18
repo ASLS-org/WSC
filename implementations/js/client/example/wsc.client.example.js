@@ -13,7 +13,7 @@ import {
   WscTransport,
   WscFlags,
   WscAddress,
-} from '@asls-org/wsc-sdk';
+} from '@asls/wsc-sdk';
 import {
   WscClient, WSC_REMOTE_STATE, DEBUGGER_LOG_TYPE, KEEPALIVE_INTERVAL,
 } from '../src/main.js';

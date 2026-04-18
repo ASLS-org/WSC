@@ -1,4 +1,4 @@
-import { WscError, WscPacket } from '@asls-org/wsc-sdk';
+import { WscError, WscPacket } from '@asls/wsc-sdk';
 import si from 'systeminformation';
 import os from 'os';
 import AbstractWscGateway from './abstract.gateway';
@@ -59,7 +59,7 @@ export default class WscStateGateway extends AbstractWscGateway {
    * process WSC State Packet
    *
    * @param {WscPacket} packet
-   * @param {import('@asls-org/wsc-server').WscPeer} peer
+   * @param {import('@asls/wsc-server').WscPeer} peer
    */
   processPacket(packet, peer) {
     this.validatePacket(packet);
@@ -74,7 +74,7 @@ export default class WscStateGateway extends AbstractWscGateway {
    * process WSC State Query Packet
    *
    * @param {WscPacket} packet
-   * @param {import('@asls-org/wsc-server').WscPeer} peer
+   * @param {import('@asls/wsc-server').WscPeer} peer
    */
   async processStateQuery(packet, peer) {
     const payload = WscPacket.decode(packet);
