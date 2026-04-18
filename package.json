@@ -62,7 +62,7 @@
       [
         "@semantic-release/exec",
         {
-          "prepareCmd": "node scripts/set-version.js ${nextRelease.version}",
+          "prepareCmd": "node scripts/sync-version.js ${nextRelease.version}",
           "publishCmd": "node scripts/publish.js"
         }
       ],
