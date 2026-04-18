@@ -29,7 +29,7 @@
   "author": "Timé Kadel",
   "license": "GPL-3.0-only",
   "dependencies": {
-    "@asls-org/wsc-sdk": "0.0.0"
+    "@asls-org/wsc-sdk": "*"
   },
   "devDependencies": {
     "vite": "^7.3.1"

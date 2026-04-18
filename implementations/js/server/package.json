@@ -24,7 +24,7 @@
   "author": "Timé Kadel",
   "license": "GPL-3.0-only",
   "dependencies": {
-    "@asls-org/wsc-sdk": "0.0.0",
+    "@asls-org/wsc-sdk": "*",
     "@roamhq/wrtc": "^0.8.0",
     "dotenv": "^17.2.4",
     "systeminformation": "^5.31.5",
