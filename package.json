@@ -62,8 +62,8 @@
       [
         "@semantic-release/exec",
         {
-          "prepareCmd": "npm version ${nextRelease.version} --workspaces --no-git-tag-version",
-          "publishCmd": "npm publish --workspaces"
+          "prepareCmd": "node scripts/set-version.js ${nextRelease.version}",
+          "publishCmd": "node scripts/publish.js"
         }
       ],
       "@semantic-release/github"
