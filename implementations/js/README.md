@@ -44,30 +44,19 @@ The gateway accepts WebRTC DataChannel connections from clients and forwards WSC
 ### Install dependencies
 
 ```sh
-cd implementations/js/server
+# In the repository root
 npm install
 ```
 
 ### Start
 
 ```sh
-# Production
-npm start
-
+# In the repository root
 # Development (auto-restart on file change, requires tsx)
-npm run dev
+npm run dev:server # Start the WSC Server
 ```
 
 The gateway listens on port **4515** by default. This port is used for both the WebSocket signaling server and is referenced as `ASLS_WSC_PORT`.
-
-### Environment
-
-Copy `.env` and adjust as needed:
-
-```
-# implementations/js/server/.env
-PORT=4515
-```
 
 ### What the gateway does
 
@@ -93,14 +82,15 @@ The example is a full interactive protocol explorer that exercises every message
 ### Install dependencies
 
 ```sh
-cd implementations/js/client
+# In the repository root
 npm install
 ```
 
 ### Start the dev server
 
 ```sh
-npm run dev
+# In the repository root
+npm run dev:client
 ```
 
 Open `http://localhost:5173` in a browser. Enter the gateway host and port (default: `localhost:4515`) and click **Connect**.
@@ -117,10 +107,16 @@ The example page provides UI panels for:
 
 ## Client — Quick Start
 
+Install the dependencies in your project:
+```bash
+npm install -S @asls/wsc-sdk
+npm install -S @asls/wsc-client
+```
+
 Import the client and the SDK binding:
 
 ```js
-import { WscClient, WSC_REMOTE_STATE, KEEPALIVE_INTERVAL } from './src/main.js';
+import { WscClient, WSC_REMOTE_STATE, KEEPALIVE_INTERVAL } from '@asls/wsc-client';
 import { WscPacket, WscTransport, WscFlags, WscAddress } from '@asls/wsc-sdk';
 ```
 
