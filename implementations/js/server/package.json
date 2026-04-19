@@ -2,7 +2,7 @@
   "version": "1.0.0",
   "name": "@asls/wsc-server",
   "type": "module",
-  "private": true,
+  "private": false,
   "publishConfig": {
     "access": "public"
   },
@@ -15,11 +15,18 @@
     "linux",
     "windows"
   ],
-  "main": "./src/main.js",
+  "main": "./src/server.js",
+  "exports": {
+    ".": "./src/server.js"
+  },
+  "files": [
+    "src"
+  ],
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "tsx watch ./src/main.js",
-    "start": "node ./src/main.js"
+    "start": "node ./src/main.js",
+    "build": "node ./src/scripts/build.js"
   },
   "author": "Timé Kadel",
   "license": "GPL-3.0-only",

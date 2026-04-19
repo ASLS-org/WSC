@@ -3,6 +3,7 @@ import { execSync } from 'child_process';
 const pkgs = [
   'bindings/js/sdk',
   'implementations/js/client',
+  'implementations/js/server',
 ];
 
 // eslint-disable-next-line no-restricted-syntax
