@@ -126,5 +126,3 @@ export default class WSCServer {
     this.handleWscPacket(packet, peer);
   }
 }
-
-wscServerInstance = new WSCServer();

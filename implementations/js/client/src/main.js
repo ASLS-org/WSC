@@ -397,5 +397,3 @@ export default class WscClientManager {
     return client;
   }
 }
-
-clientManagerInstance = new WscClientManager();

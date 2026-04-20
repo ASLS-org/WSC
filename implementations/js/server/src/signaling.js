@@ -59,6 +59,7 @@ export default class SignalingServer {
    * @returns {SignalingServer} signaling server instance
    */
   static getInstance() {
+    if (!signalingInstance) signalingInstance = new SignalingServer();
     return signalingInstance;
   }
 
@@ -75,7 +76,7 @@ export default class SignalingServer {
 
         ws.onmessage = peer.handleSignaling.bind(peer);
         ws.onclose = () => this.handleClosure(peer.client.id);
-        ws.onerror = this.handleError;
+        ws.onerror = this.handleError.bind(this);
 
         this.clients.set(peer.client.id, peer.client);
 
@@ -86,31 +87,6 @@ export default class SignalingServer {
       throw new Error('No web socket server instance');
     }
   }
-
-  // async handleSignaling(msg, ws) {
-  //   const data = JSON.parse(msg);
-  //   const peer = WSCPeer.getInstance();
-
-  //   try {
-  //     if (data.type === MSG_TYPE.OFFER) {
-  //       // Handle Offer (Offer received from browser)
-  //       logger.debug('Received offer from client');
-  //       await peer.handleOffer(data.offer, ws);
-  //     } else if (data.type === MSG_TYPE.ANSWER) {
-  //       // Handle Answer (Answer from browser)
-  //       logger.debug('Received answer from client');
-  //       await peer.handleAnswer(data.answer);
-  //     } else if (data.type === MSG_TYPE.ICE) {
-  //       // Handle ICE candidate
-  //       logger.debug('Received ICE candidate from client');
-  //       await peer.handleIceCandidate(data.candidate);
-  //     } else {
-  //       logger.debug('Unknown signaling message type:', data.type);
-  //     }
-  //   } catch (error) {
-  //     logger.error('Error handling message:', error);
-  //   }
-  // }
 
   /**
    * handle connection closure
@@ -125,5 +101,3 @@ export default class SignalingServer {
     logger.debug('Signaling server error:', err);
   }
 }
-
-signalingInstance = new SignalingServer();

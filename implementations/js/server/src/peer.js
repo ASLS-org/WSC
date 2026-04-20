@@ -188,6 +188,7 @@ export default class WscPeerManager {
    * @return {WscPeerManager} WscPeer instance
    */
   static getInstance() {
+    if (!peerManagerInstance) return new WscPeerManager();
     return peerManagerInstance;
   }
 
