@@ -15,12 +15,12 @@
     "linux",
     "windows"
   ],
-  "main": "./src/server.js",
+  "main": "./dist/server.js",
   "exports": {
-    ".": "./src/server.js"
+    ".": "./dist/server.js"
   },
   "files": [
-    "src"
+    "dist"
   ],
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",

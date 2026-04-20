@@ -14,15 +14,12 @@ async function run() {
   console.log('⚡ Building server...');
 
   await build({
-    entryPoints: ['./src/server.js'], // ✅ FIXED
-    outfile: './dist/server.js', // or main.js if you prefer
-
+    entryPoints: ['./src/server.js'],
+    outfile: './dist/server.js',
     bundle: true,
     platform: 'node',
     target: 'node20',
     format: 'esm',
-    sourcemap: true,
-
     external: [
       '@roamhq/wrtc',
       'systeminformation',
@@ -34,9 +31,6 @@ async function run() {
   const pkg = JSON.parse(
     await readFile('./package.json', 'utf-8'),
   );
-
-  delete pkg.devDependencies;
-  delete pkg.scripts;
 
   pkg.main = './server.js';
   pkg.exports = {
