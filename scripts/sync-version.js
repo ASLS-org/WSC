@@ -5,6 +5,7 @@ const version = process.argv[2];
 const packages = [
   'bindings/js/sdk/package.json',
   'implementations/js/client/package.json',
+  'implementations/js/server/package.json',
 ];
 
 // eslint-disable-next-line no-restricted-syntax
