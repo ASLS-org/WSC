@@ -1,23 +1,43 @@
 {
   "version": "1.0.0",
   "name": "@asls/wsc-server",
-  "type": "module",
   "private": false,
   "publishConfig": {
     "access": "public"
   },
   "description": "ASLS's WSC (Web Show Control) server",
   "engines": {
-    "node": ">=20"
+    "node": "18"
   },
   "os": [
     "darwin",
     "linux",
-    "windows"
+    "win32"
   ],
-  "main": "./dist/server.js",
+  "bin": "./dist/main.cjs",
+  "pkg": {
+    "scripts": "dist/**/*.cjs",
+    "assets": [
+      "./dist/**/*",
+      "../../../node_modules/**/*"
+    ],
+    "options": {
+      "no-bytecode": true,
+      "public-packages": "*"
+    },
+    "targets": [
+      "node18-macos-x64",
+      "node18-linux-x64",
+      "node18-windows-x64",
+      "node18-macos-arm64",
+      "node18-linux-arm64",
+      "node18-windows-arm64"
+    ],
+    "outputPath": "./dist/bin"
+  },
+  "main": "./dist/main.cjs",
   "exports": {
-    ".": "./dist/server.js"
+    ".": "./dist/main.cjs"
   },
   "files": [
     "dist"
@@ -25,8 +45,9 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "tsx watch ./src/main.js",
-    "start": "node ./src/main.js",
-    "build": "node ./src/scripts/build.js"
+    "start": "node ./dist/main.cjs",
+    "build": "node ./src/scripts/build.js",
+    "pkg": "npm run build; npx pkg ."
   },
   "author": "Timé Kadel",
   "license": "GPL-3.0-only",

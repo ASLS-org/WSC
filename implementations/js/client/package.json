@@ -8,12 +8,12 @@
   },
   "description": "ASLS's WSC (Web Show Control) client",
   "engines": {
-    "node": ">=20"
+    "node": "18"
   },
   "os": [
     "darwin",
     "linux",
-    "windows"
+    "win32"
   ],
   "main": "src/main.js",
   "exports": {

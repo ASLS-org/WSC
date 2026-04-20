@@ -25,6 +25,8 @@ jobs:
 
       - run: npm run build
 
+      - run: npm run pkg:server
+
       - name: Release
         run: npx semantic-release
         env:

@@ -13,7 +13,7 @@
   "os": [
     "darwin",
     "linux",
-    "windows"
+    "win32"
   ],
   "main": "./src/main.js",
   "exports": {
