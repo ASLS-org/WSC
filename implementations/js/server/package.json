@@ -2,6 +2,7 @@
   "version": "1.0.0",
   "name": "@asls/wsc-server",
   "private": false,
+  "type": "module",
   "publishConfig": {
     "access": "public"
   },
@@ -18,8 +19,7 @@
   "pkg": {
     "scripts": "dist/**/*.cjs",
     "assets": [
-      "./dist/**/*",
-      "../../../node_modules/**/*"
+      "./dist/**/*"
     ],
     "options": {
       "no-bytecode": true,
@@ -40,7 +40,8 @@
     ".": "./dist/main.cjs"
   },
   "files": [
-    "dist"
+    "dist/**/*.cjs",
+    "dist/package.json"
   ],
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",

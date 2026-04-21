@@ -20,10 +20,10 @@ async function run() {
     platform: 'node',
     target: 'node20',
     format: 'cjs',
-    external: [
-      '@roamhq/wrtc',
-      'systeminformation',
-    ],
+    // external: [
+    //   '@roamhq/wrtc',
+    //   'systeminformation',
+    // ],
   });
 
   console.log('📄 Updating package.json...');
