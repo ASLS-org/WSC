@@ -44,7 +44,7 @@ jobs:
 
       - run: npm run build
 
-      - run: npm run pkg
+      - run: npm run pkg:server
 
       # macOS ad-hoc signing
       - name: Codesign macOS binary
