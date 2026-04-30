@@ -74,7 +74,7 @@
         {
           "assets": [
             {
-              "path": "implementations/js/server/dist/bin/*"
+              "path": "implementations/js/server/dist/bin/**/*"
             }
           ]
         }

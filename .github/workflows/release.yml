@@ -116,6 +116,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           path: ./implementations/js/server/dist/bin
+          merge-multiple: true
 
       # ----------------------------
       # Release
