@@ -25,14 +25,6 @@
       "no-bytecode": true,
       "public-packages": "*"
     },
-    "targets": [
-      "node18-macos-x64",
-      "node18-linux-x64",
-      "node18-windows-x64",
-      "node18-macos-arm64",
-      "node18-linux-arm64",
-      "node18-windows-arm64"
-    ],
     "outputPath": "./dist/bin"
   },
   "main": "./dist/main.cjs",
@@ -48,7 +40,7 @@
     "dev": "tsx watch ./src/main.js",
     "start": "node ./dist/main.cjs",
     "build": "node ./src/scripts/build.js",
-    "pkg": "npm run build; npx pkg ."
+    "pkg": "npm run build && pkg . --targets $PKG_TARGET"
   },
   "author": "Timé Kadel",
   "license": "GPL-3.0-only",

@@ -8,69 +8,50 @@ jobs:
   build:
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        include:
+          - os: ubuntu-latest
+            target: node18-linux-x64
+
+          - os: windows-latest
+            target: node18-win-x64
+
+          - os: macos-latest
+            target: node18-macos-arm64
 
     runs-on: ${{ matrix.os }}
 
     permissions:
       contents: write
 
+    env:
+      PKG_TARGET: ${{ matrix.target }}
+
     steps:
-      # ----------------------------
-      # Checkout
-      # ----------------------------
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      # ----------------------------
-      # Node setup
-      # ----------------------------
       - uses: actions/setup-node@v4
         with:
           node-version: 20
           registry-url: https://registry.npmjs.org
           cache: npm
 
-      # ----------------------------
-      # Install deps
-      # ----------------------------
       - run: npm ci
 
-      # ----------------------------
-      # Build project
-      # ----------------------------
+      # IMPORTANT for wrtc native binaries
+      - run: npm rebuild @roamhq/wrtc
+
       - run: npm run build
 
-      # ----------------------------
-      # Build server (pkg)
-      # ----------------------------
-      - run: npm run pkg:server
+      - run: npm run pkg
 
-      # ----------------------------
-      # macOS signing (ONLY macOS)
-      # ----------------------------
+      # macOS ad-hoc signing
       - name: Codesign macOS binary
         if: matrix.os == 'macos-latest'
         run: |
-          echo "Signing macOS server binary..."
-          codesign --force --deep --sign - ./dist/server/wsc-server-macos-arm64
+          find ./implementations/js/server/dist/bin -type f -exec codesign --force --deep --sign - {} \;
 
-          echo "Verifying signature..."
-          codesign --verify --deep --strict --verbose=2 ./dist/server/wsc-server-macos-arm64
-
-      # ----------------------------
-      # Upload artifacts
-      # ----------------------------
-      - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: server-${{ matrix.os }}
-          path: dist/
-
-  # ----------------------------
-  # Release (runs once)
-  # ----------------------------
   release:
     needs: build
     runs-on: ubuntu-latest
@@ -80,8 +61,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - uses: actions/setup-node@v4
         with:
