@@ -40,7 +40,7 @@
     "dev": "tsx watch ./src/main.js",
     "start": "node ./dist/main.cjs",
     "build": "node ./src/scripts/build.js",
-    "pkg": "npm run build && pkg . --targets $PKG_TARGET"
+    "pkg": "npx pkg . --targets $PKG_TARGET"
   },
   "author": "Timé Kadel",
   "license": "GPL-3.0-only",
