@@ -44,7 +44,8 @@ jobs:
 
       - run: npm run build
 
-      - run: npm run pkg:server
+      - run: npx pkg . --targets ${{ matrix.target }}
+        working-directory: ./implementations/js/server
 
       # macOS ad-hoc signing
       - name: Codesign macOS binary
