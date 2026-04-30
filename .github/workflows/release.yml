@@ -59,9 +59,12 @@ jobs:
       # ----------------------------
       # Package
       # ----------------------------
-      - run: npx pkg . --targets ${{ matrix.target }}
+      - name: Package server
+        run: |
+          npx pkg . \
+            --targets ${{ matrix.target }} \
+            --output ./dist/bin/wsc-server-${{ matrix.target }}
         working-directory: ./implementations/js/server
-
       # ----------------------------
       # macOS ad-hoc signing
       # ----------------------------
