@@ -19,7 +19,7 @@
   "pkg": {
     "scripts": "dist/**/*.cjs",
     "assets": [
-      "./dist/**/*"
+      "../../../node_modules/@roamhq/**/*"
     ],
     "options": {
       "no-bytecode": true,

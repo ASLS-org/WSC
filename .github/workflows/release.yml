@@ -5,7 +5,74 @@ on:
     branches: [main, staging]
 
 jobs:
+  build:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+
+    runs-on: ${{ matrix.os }}
+
+    permissions:
+      contents: write
+
+    steps:
+      # ----------------------------
+      # Checkout
+      # ----------------------------
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # ----------------------------
+      # Node setup
+      # ----------------------------
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          registry-url: https://registry.npmjs.org
+          cache: npm
+
+      # ----------------------------
+      # Install deps
+      # ----------------------------
+      - run: npm ci
+
+      # ----------------------------
+      # Build project
+      # ----------------------------
+      - run: npm run build
+
+      # ----------------------------
+      # Build server (pkg)
+      # ----------------------------
+      - run: npm run pkg:server
+
+      # ----------------------------
+      # macOS signing (ONLY macOS)
+      # ----------------------------
+      - name: Codesign macOS binary
+        if: matrix.os == 'macos-latest'
+        run: |
+          echo "Signing macOS server binary..."
+          codesign --force --deep --sign - ./dist/server/wsc-server-macos-arm64
+
+          echo "Verifying signature..."
+          codesign --verify --deep --strict --verbose=2 ./dist/server/wsc-server-macos-arm64
+
+      # ----------------------------
+      # Upload artifacts
+      # ----------------------------
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: server-${{ matrix.os }}
+          path: dist/
+
+  # ----------------------------
+  # Release (runs once)
+  # ----------------------------
   release:
+    needs: build
     runs-on: ubuntu-latest
 
     permissions:
@@ -19,13 +86,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          registry-url: https://registry.npmjs.org
 
-      - run: npm install
-
-      - run: npm run build
-
-      - run: npm run pkg:server
+      - run: npm ci
 
       - name: Release
         run: npx semantic-release
