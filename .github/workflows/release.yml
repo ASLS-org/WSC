@@ -23,52 +23,103 @@ jobs:
     permissions:
       contents: write
 
-    env:
-      PKG_TARGET: ${{ matrix.target }}
-
     steps:
+      # ----------------------------
+      # Checkout
+      # ----------------------------
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
+      # ----------------------------
+      # Node
+      # ----------------------------
       - uses: actions/setup-node@v4
         with:
           node-version: 20
           registry-url: https://registry.npmjs.org
           cache: npm
 
+      # ----------------------------
+      # Install
+      # ----------------------------
       - run: npm ci
 
-      # IMPORTANT for wrtc native binaries
+      # ----------------------------
+      # Ensure correct wrtc native binary
+      # ----------------------------
       - run: npm rebuild @roamhq/wrtc
+        working-directory: ./implementations/js/server
 
+      # ----------------------------
+      # Build
+      # ----------------------------
       - run: npm run build
 
+      # ----------------------------
+      # Package
+      # ----------------------------
       - run: npx pkg . --targets ${{ matrix.target }}
         working-directory: ./implementations/js/server
 
+      # ----------------------------
       # macOS ad-hoc signing
+      # ----------------------------
       - name: Codesign macOS binary
         if: matrix.os == 'macos-latest'
         run: |
           find ./implementations/js/server/dist/bin -type f -exec codesign --force --deep --sign - {} \;
 
+      # ----------------------------
+      # Upload artifacts
+      # ----------------------------
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-${{ matrix.target }}
+          path: ./implementations/js/server/dist/bin/*
+
   release:
     needs: build
+
     runs-on: ubuntu-latest
 
     permissions:
       contents: write
 
     steps:
+      # ----------------------------
+      # Checkout
+      # ----------------------------
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
+      # ----------------------------
+      # Node
+      # ----------------------------
       - uses: actions/setup-node@v4
         with:
           node-version: 20
+          registry-url: https://registry.npmjs.org
+          cache: npm
 
+      # ----------------------------
+      # Install
+      # ----------------------------
       - run: npm ci
 
+      # ----------------------------
+      # Restore binaries EXACTLY where semantic-release expects them
+      # ----------------------------
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: ./implementations/js/server/dist/bin
+
+      # ----------------------------
+      # Release
+      # ----------------------------
       - name: Release
         run: npx semantic-release
         env:
