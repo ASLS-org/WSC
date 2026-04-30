@@ -1,7 +1,6 @@
 {
   "version": "1.0.0",
   "name": "@asls/wsc",
-  "type": "module",
   "private": true,
   "description": "ASLS's WSC protocol (Web Show Control)",
   "engines": {
@@ -10,7 +9,7 @@
   "os": [
     "darwin",
     "linux",
-    "windows"
+    "win32"
   ],
   "workspaces": [
     "./bindings/js/sdk",
@@ -22,6 +21,7 @@
     "dev:client": "npm run dev --workspace=@asls/wsc-client",
     "dev:server": "npm run dev --workspace=@asls/wsc-server",
     "build": "npm run build --workspace=@asls/wsc-server",
+    "pkg:server": "npm run pkg --workspace=@asls/wsc-server",
     "lint": "npm run lint --workspaces",
     "lint:fix": "npm run lint:fix --workspaces",
     "format": "prettier --write .",
@@ -46,6 +46,7 @@
     "eslint-plugin-import": "^2.32.0",
     "eslint-plugin-prettier": "^5.5.5",
     "globals": "^17.3.0",
+    "pkg": "^5.8.1",
     "prettier": "^3.8.1",
     "semantic-release": "^24.2.9",
     "tsx": "^4.21.0"
@@ -68,7 +69,16 @@
           "publishCmd": "node scripts/publish.js"
         }
       ],
-      "@semantic-release/github"
+      [
+        "@semantic-release/github",
+        {
+          "assets": [
+            {
+              "path": "implementations/js/server/dist/bin/**/*"
+            }
+          ]
+        }
+      ]
     ]
   }
 }

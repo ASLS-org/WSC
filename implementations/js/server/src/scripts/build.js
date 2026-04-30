@@ -14,16 +14,16 @@ async function run() {
   console.log('⚡ Building server...');
 
   await build({
-    entryPoints: ['./src/server.js'],
-    outfile: './dist/server.js',
+    entryPoints: ['./src/main.js'],
+    outfile: './dist/main.cjs',
     bundle: true,
     platform: 'node',
     target: 'node20',
-    format: 'esm',
-    external: [
-      '@roamhq/wrtc',
-      'systeminformation',
-    ],
+    format: 'cjs',
+    // external: [
+    //   '@roamhq/wrtc',
+    //   'systeminformation',
+    // ],
   });
 
   console.log('📄 Updating package.json...');
@@ -32,9 +32,9 @@ async function run() {
     await readFile('./package.json', 'utf-8'),
   );
 
-  pkg.main = './server.js';
+  pkg.main = './main.js';
   pkg.exports = {
-    '.': './server.js',
+    '.': './main.js',
   };
 
   await writeFile(

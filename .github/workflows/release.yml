@@ -5,26 +5,122 @@ on:
     branches: [main, staging]
 
 jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: node18-linux-x64
+
+          - os: windows-latest
+            target: node18-win-x64
+
+          - os: macos-latest
+            target: node18-macos-arm64
+
+    runs-on: ${{ matrix.os }}
+
+    permissions:
+      contents: write
+
+    steps:
+      # ----------------------------
+      # Checkout
+      # ----------------------------
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # ----------------------------
+      # Node
+      # ----------------------------
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          registry-url: https://registry.npmjs.org
+          cache: npm
+
+      # ----------------------------
+      # Install
+      # ----------------------------
+      - run: npm ci
+
+      # ----------------------------
+      # Ensure correct wrtc native binary
+      # ----------------------------
+      - run: npm rebuild @roamhq/wrtc
+        working-directory: ./implementations/js/server
+
+      # ----------------------------
+      # Build
+      # ----------------------------
+      - run: npm run build
+
+      # ----------------------------
+      # Package
+      # ----------------------------
+      - name: Package server
+        run: npx pkg . --targets ${{ matrix.target }} --output ./dist/bin/wsc-server-${{ matrix.target }}
+        working-directory: ./implementations/js/server
+      # ----------------------------
+      # macOS ad-hoc signing
+      # ----------------------------
+      - name: Codesign macOS binary
+        if: matrix.os == 'macos-latest'
+        run: |
+          find ./implementations/js/server/dist/bin -type f -exec codesign --force --deep --sign - {} \;
+
+      # ----------------------------
+      # Upload artifacts
+      # ----------------------------
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-${{ matrix.target }}
+          path: ./implementations/js/server/dist/bin/*
+
   release:
+    needs: build
+
     runs-on: ubuntu-latest
 
     permissions:
       contents: write
 
     steps:
+      # ----------------------------
+      # Checkout
+      # ----------------------------
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
+      # ----------------------------
+      # Node
+      # ----------------------------
       - uses: actions/setup-node@v4
         with:
           node-version: 20
           registry-url: https://registry.npmjs.org
+          cache: npm
 
-      - run: npm install
+      # ----------------------------
+      # Install
+      # ----------------------------
+      - run: npm ci
 
-      - run: npm run build
+      # ----------------------------
+      # Restore binaries EXACTLY where semantic-release expects them
+      # ----------------------------
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: ./implementations/js/server/dist/bin
+          merge-multiple: true
 
+      # ----------------------------
+      # Release
+      # ----------------------------
       - name: Release
         run: npx semantic-release
         env:

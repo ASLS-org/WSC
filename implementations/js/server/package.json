@@ -1,32 +1,46 @@
 {
   "version": "1.0.0",
   "name": "@asls/wsc-server",
-  "type": "module",
   "private": false,
+  "type": "module",
   "publishConfig": {
     "access": "public"
   },
   "description": "ASLS's WSC (Web Show Control) server",
   "engines": {
-    "node": ">=20"
+    "node": "18"
   },
   "os": [
     "darwin",
     "linux",
-    "windows"
+    "win32"
   ],
-  "main": "./dist/server.js",
+  "bin": "./dist/main.cjs",
+  "pkg": {
+    "scripts": "dist/**/*.cjs",
+    "assets": [
+      "../../../node_modules/@roamhq/**/*"
+    ],
+    "options": {
+      "no-bytecode": true,
+      "public-packages": "*"
+    },
+    "outputPath": "./dist/bin"
+  },
+  "main": "./dist/main.cjs",
   "exports": {
-    ".": "./dist/server.js"
+    ".": "./dist/main.cjs"
   },
   "files": [
-    "dist"
+    "dist/**/*.cjs",
+    "dist/package.json"
   ],
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "tsx watch ./src/main.js",
-    "start": "node ./src/main.js",
-    "build": "node ./src/scripts/build.js"
+    "start": "node ./dist/main.cjs",
+    "build": "node ./src/scripts/build.js",
+    "pkg": "npx pkg ."
   },
   "author": "Timé Kadel",
   "license": "GPL-3.0-only",
