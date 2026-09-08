@@ -1,5 +1,6 @@
 import { WscError, WscPacket, WscTransport } from '@asls/wsc-sdk';
 import ArtnetForwarder from '../protocols/dmx/dmx.artnet';
+import SerialDmxForwarder from '../protocols/dmx/dmx.serial';
 import AbstractWscGateway from './abstract.gateway';
 
 const SUPPORTED_PACKET_TYPES = [
@@ -11,6 +12,7 @@ export default class WscStreamGateway extends AbstractWscGateway {
   constructor() {
     super(SUPPORTED_PACKET_TYPES);
     this.artnetForwarder = new ArtnetForwarder();
+    this.serialDmxForwarder = new SerialDmxForwarder();
   }
 
   /**
@@ -22,6 +24,13 @@ export default class WscStreamGateway extends AbstractWscGateway {
     switch (packet.transport.protocol) {
       case WscTransport.Protocol.ARTNET:
         this.artnetForwarder.forwardDMXData(packet);
+        break;
+      // 便宜的 USB-DMX 适配器(ENTTEC USB PRO 兼容)走 DMX512 协议 + SERIAL 接口，
+      // 不是走 ARTNET——这条分支之前没有实现，参考 dmx.artnet.js 补的。
+      case WscTransport.Protocol.DMX512:
+        if (packet.transport.iface === WscTransport.Iface.SERIAL) {
+          this.serialDmxForwarder.forwardDMXData(packet);
+        }
         break;
       default: break;
     }
