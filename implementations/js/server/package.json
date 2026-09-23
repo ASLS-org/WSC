@@ -48,6 +48,7 @@
     "@asls/wsc-sdk": "*",
     "@roamhq/wrtc": "^0.8.0",
     "dotenv": "^17.2.4",
+    "serialport": "^12.0.0",
     "systeminformation": "^5.31.5",
     "ws": "^8.11.0"
   }
